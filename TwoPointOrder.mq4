@@ -55,6 +55,7 @@ void removeOrder(int magicNumber) {
            for(int j = i; j < size - 1; j++) {
                orderInfoArray[j] = orderInfoArray[j + 1];
            }
+           deleteLine(magicNumber);
            ArrayResize(orderInfoArray, size - 1);
            break;
        }
@@ -75,6 +76,15 @@ void filterClosedOrders(){
    }
 }
 
+void drawLine(int mn, double price){
+   ObjectCreate(0, mn+"", OBJ_HLINE, 0, 0, price);
+//---   ObjectCreate(0,"obj_name",OBJ_LABEL,0,0,0.75540);
+   //---   ObjectCreate("Line",OBJ_VLINE,0,time,0,price);
+}
+
+void deleteLine(int mn) {
+   ObjectDelete(0, mn+"");
+}
 
 int findOrderByMagicNumber(int magicNum) {
    for(int i=0; i<ArraySize(orderInfoArray); i++) 
@@ -91,7 +101,7 @@ void updateOrders() {
 
 void updateOrderByMN(int magicNumber, int ticket, double openPrice, double currentSL, int orderType) {
    int idx = findOrderByMagicNumber(magicNumber);
-   int sl = currentSL;
+   double sl = currentSL;
    if(idx == -1) return;
    if(orderInfoArray[idx].ticket != ticket) {
       orderInfoArray[idx].ticket = ticket;
@@ -149,6 +159,7 @@ void placeBuyOrder() {
       newOrder.magicNumber = magicNumber;
       newOrder.reachedFirstTP = false;
       insertOrder(newOrder);
+      drawLine(magicNumber,newOrder.firstTarget);
       Print("Buy order placed successfully. Ticket: ", ticket);
    }
    else {
@@ -174,6 +185,7 @@ void placeSellOrder() {
       newOrder.magicNumber = magicNumber;
       newOrder.reachedFirstTP = false;
       insertOrder(newOrder);
+      drawLine(magicNumber,newOrder.firstTarget);
       Print("Sell order placed successfully. Ticket: ", ticket);
    }
    else {
@@ -203,6 +215,7 @@ void onBuyDebit(int i, double lots, double minLot){
    if( ( lotToDebit > 0 && lotToDebit <= lots ) && partiallyCloseOrder(lotToDebit, price ) ) {
       orderInfoArray[i].reachedFirstTP = true;
       removeOrder(orderInfoArray[i].magicNumber);
+      
    } else {
       if(lotToDebit > 0)
          Alert("Failed to Debit", lotToDebit);
@@ -279,14 +292,14 @@ void OnDeinit(const int reason) {
 
 // Main program function
 void OnTick() {
-   updateOrders();
+//   updateOrders();
    onPriceUpdateTick();
 }
 
 
 void OnTimer() {
    filterClosedOrders();
-   updateOrders();
+//   updateOrders();
 }
 
 
