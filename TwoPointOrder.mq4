@@ -91,7 +91,7 @@ void updateOrders() {
 
 void updateOrderByMN(int magicNumber, int ticket, double openPrice, double currentSL, int orderType) {
    int idx = findOrderByMagicNumber(magicNumber);
-   int sl = currentSL;
+   double sl = currentSL;
    if(idx == -1) return;
    if(orderInfoArray[idx].ticket != ticket) {
       orderInfoArray[idx].ticket = ticket;
