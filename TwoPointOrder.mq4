@@ -92,6 +92,7 @@ int findOrderByMagicNumber(int magicNum) {
    return -1;
 }
 
+/*
 void updateOrders() {
    for(int i=0; i<OrdersTotal(); i++) {
       if(!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
@@ -111,6 +112,7 @@ void updateOrderByMN(int magicNumber, int ticket, double openPrice, double curre
    orderInfoArray[idx].stopLoss = sl;
    orderInfoArray[idx].firstTarget = openPrice + (openPrice - currentSL);
 }
+*/
 
 void readLotSize() {
     string text = ObjectGetString(0, g_lotSizeEditName, OBJPROP_TEXT);
@@ -138,18 +140,51 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
 
    }
 }
-
+/*
+void placeSplitOrders(double lots){
+   double minLot = MarketInfo(Symbol(), MODE_MINLOT);
+   if(lots <= 0 || lots< minLot) {
+      return Alert("Invalid Lot Size, couldn't place Order", minLot, lots);
+   }
+   double firstHalfLot = NormalizeDouble(lots / 2, 2);
+   double remainingLot = lots - firstHalfLot;   
+   if(firstHalfLot >= minLot && remainingLot >= minLot) {
+      // place order with Both Lots
+   }
+   else {
+      // Place Single Order
+   }
+}
+*/
 void placeBuyOrder() {
    readLotSize();
    double lotSize = g_lotSize;
+   double minLot = MarketInfo(Symbol(), MODE_MINLOT);
    double target = Ask + (Point * TakeProfit);
    double firstTarget = Ask + (Point * TakeProfitDynamic);
    double stopLoss = Ask - (Point * StopLoss);
    int magicNumber = getRandomMN();
    
-   // Place the order
-   int ticket=OrderSend(OrderSymbol(), OP_BUY, lotSize, Ask, 5, stopLoss, target, "", magicNumber, 0, clrGreen);
+   if(lotSize <= 0 || lotSize< minLot) {
+      Alert("Invalid Lot Size, couldn't place Order", minLot, lotSize);
+      return ;
+   }
    
+   double firstHalfLot = NormalizeDouble(lotSize / 2, 2);
+   double remainingLot = lotSize - firstHalfLot;   
+   if(firstHalfLot >= minLot && remainingLot >= minLot) {
+      // Place the order
+      int ticket1=OrderSend(OrderSymbol(), OP_BUY, firstHalfLot, Ask, 5, stopLoss, target, "", magicNumber, 0, clrGreen);
+      int ticket2=OrderSend(OrderSymbol(), OP_BUY, remainingLot, Ask, 5, stopLoss, target, "", magicNumber, 0, clrGreen);
+      if(ticket1 <= 0) Print("Error placing buy order. Error code: ", GetLastError());
+      if(ticket2 <= 0) Print("Error placing buy order. Error code: ", GetLastError());
+   }
+   else {
+      int ticket=OrderSend(OrderSymbol(), OP_BUY, lotSize, Ask, 5, stopLoss, target, "", magicNumber, 0, clrGreen);
+      if(ticket <= 0) Print("Error placing buy order. Error code: ", GetLastError());
+      // Place Single Order
+   }
+/*
    if(ticket > 0) {
       OrderInfo newOrder;
       newOrder.ticket = ticket;
@@ -165,16 +200,38 @@ void placeBuyOrder() {
    else {
       Print("Error placing buy order. Error code: ", GetLastError());
    }
+*/
 }
 
 void placeSellOrder() {
    readLotSize();
    double lotSize = g_lotSize;
+   double minLot = MarketInfo(Symbol(), MODE_MINLOT);
    double target = Bid - (Point * TakeProfit);
    double firstTarget = Bid - (Point * TakeProfitDynamic);
    double stopLoss = Bid + (Point * StopLoss);
    int magicNumber = getRandomMN();
    
+   if(lotSize <= 0 || lotSize< minLot) {
+      Alert("Invalid Lot Size, couldn't place Order", minLot, lotSize);
+      return;
+   }
+   
+   double firstHalfLot = NormalizeDouble(lotSize / 2, 2);
+   double remainingLot = lotSize - firstHalfLot;   
+   if(firstHalfLot >= minLot && remainingLot >= minLot) {
+      // Place the order
+      int ticket1=OrderSend(OrderSymbol(), OP_SELL, firstHalfLot, Bid, 5, stopLoss, target, "", magicNumber, 0, clrRed);
+      int ticket2=OrderSend(OrderSymbol(), OP_SELL, remainingLot, Bid, 5, stopLoss, target, "", magicNumber, 0, clrGreen);
+      if(ticket1 <= 0) Print("Error placing buy order. Error code: ", GetLastError());
+      if(ticket2 <= 0) Print("Error placing buy order. Error code: ", GetLastError());
+   }
+   else {
+      int ticket = OrderSend(OrderSymbol(), OP_SELL, lotSize, Bid, 5, stopLoss, target, "", magicNumber, 0, clrRed);
+      if(ticket <= 0) Print("Error placing buy order. Error code: ", GetLastError());
+      // Place Single Order
+   }
+/*
    int ticket = OrderSend(OrderSymbol(), OP_SELL, lotSize, Bid, 5, stopLoss, target, "", magicNumber, 0, clrRed);
    if(ticket > 0) {
       OrderInfo newOrder;
@@ -191,8 +248,9 @@ void placeSellOrder() {
    else {
       Print("Error placing Sell order. Error code: ", GetLastError());
    }
+   */
 }
-
+/*
 void onBuyDebit(int i, double lots, double minLot){
    double lotToDebit = 0;
    double price = MarketInfo(OrderSymbol(), MODE_BID);
@@ -268,17 +326,19 @@ void onPriceUpdateTick() {
     }
 }
 
+*/
+
 // OnInit function
 int OnInit() {
    // Create the button
    CreateButton("BUY", clrBlue);
    CreateButton("SELL", clrRed, 10);
    CreateLotSizeEdit();
-   updateOrderInfoArray();
-   if(!EventSetMillisecondTimer(TIMER_INTERVAL)) {
-      Print("Failed to start the timer!");
-      return INIT_FAILED;
-   }
+//   updateOrderInfoArray();
+//   if(!EventSetMillisecondTimer(TIMER_INTERVAL)) {
+//      Print("Failed to start the timer!");
+//      return INIT_FAILED;
+//   }
    return(INIT_SUCCEEDED);
 }
 
@@ -293,15 +353,17 @@ void OnDeinit(const int reason) {
 // Main program function
 void OnTick() {
 //   updateOrders();
-   onPriceUpdateTick();
+//   onPriceUpdateTick();
+//   filterClosedOrders();
 }
 
+/*
 
 void OnTimer() {
    filterClosedOrders();
 //   updateOrders();
 }
-
+*/
 
 // Function to create the lot size edit box on the chart
 void CreateLotSizeEdit() {
